@@ -79,7 +79,7 @@ TRAPHANDLER_NOEC(thdlr28, 28)
 TRAPHANDLER_NOEC(thdlr29, 29)
 TRAPHANDLER_NOEC(thdlr30, 30)
 TRAPHANDLER_NOEC(thdlr31, 31)
-
+TRAPHANDLER_NOEC(thdlr32, 32)
 /*
  * Lab 3: Your code here for _alltraps
  */
@@ -137,3 +137,4 @@ trap_handlers:
 	.long thdlr29
 	.long thdlr30
 	.long thdlr31
+	.long thdlr32

@@ -280,7 +280,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 	struct PageInfo *p;
 	a = (char *)ROUNDDOWN((size_t)va,PGSIZE);
 	last = (char *)ROUNDDOWN((size_t)va + len -1,PGSIZE);
-	cprintf("alloc %08x   size=%08x  last=%08x\n", a, len, last);
+	//cprintf("alloc %08x   size=%08x  last=%08x\n", a, len, last);
 	for(;;){
 	  
 	  if(!(p = page_alloc(0)))
