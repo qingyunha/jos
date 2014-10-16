@@ -73,7 +73,7 @@ trap_init(void)
 
 	// LAB 3: Your code here.
     int i;
-    for(i = 0; i <= 31; i++)
+    for(i = 0; i < 256; i++)
       SETGATE(idt[i], 0,  GD_KT, trap_handlers[i], 0);
     
     SETGATE(idt[T_BRKPT], 0, GD_KT, trap_handlers[T_BRKPT], 3);
@@ -111,17 +111,19 @@ trap_init_percpu(void)
 
 	// Setup a TSS so that we get the right stack
 	// when we trap to the kernel.
-	thiscpu->cpu_ts.ts_esp0 = KSTACKTOP;
-	thiscpu->cpu_ts.ts_ss0 = GD_KD;
+	struct Taskstate *pts = &thiscpu->cpu_ts;
+	uint32_t cid = cpunum();
+	pts->ts_esp0 = KSTACKTOP - (KSTKSIZE + KSTKGAP) * cid;
+	pts->ts_ss0 = GD_KD;
 
 	// Initialize the TSS slot of the gdt.
-	gdt[GD_TSS0 >> 3] = SEG16(STS_T32A, (uint32_t) &thiscpu->cpu_ts,
-					sizeof(struct Taskstate) - 1, 0);
-	gdt[GD_TSS0 >> 3].sd_s = 0;
+	gdt[(GD_TSS0 >> 3) + cid] = SEG16(STS_T32A, (uint32_t) (pts),
+					sizeof(struct Taskstate), 0);
+	gdt[(GD_TSS0 >> 3) + cid].sd_s = 0;
 
 	// Load the TSS selector (like other segment selectors, the
 	// bottom three bits are special; we leave them 0)
-	ltr(GD_TSS0);
+	ltr(GD_TSS0 + cid * sizeof(struct Segdesc));
 
 	// Load the IDT
 	lidt(&idt_pd);
@@ -216,7 +218,10 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle clock interrupts. Don't forget to acknowledge the
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
-	
+	if (tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER){
+	  lapic_eoi();
+	  sched_yield();
+	}
 	
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
